@@ -14,10 +14,10 @@ Starts with a graph containing only one vertex, the tree root (first comment in 
 ### Step:
 For each iteration (from 1 to t):
 * Decides with probability p if the current vertex (vertex where the cursor is at) will receive a reply.
-  * If it does, then a vertex is added to the graph connecting the current vertex with the new one, directed from the new to the current. Then the cursor goes back to the tree root (first comment in the thread) and the iteration ends.
+  * If it does, then a vertex is added to the graph connecting the current vertex with the new one, directed from the new to the current. Then the cursor goes back to the tree root (first comment in the thread) and the iteration ends, going back to the first setp.
   * If doesn't receive a reply, then the cursor goes down a level of the tree.
-    * If the current vertex has no neighbors, then the cursor goes back to the tree root (first comment in the thread) and the iteration ends.
-    * Else, the next vertex is chosen in the next level with probability proportional to it's in-degree, so that the more neighbors the vertex has, the more it is preferred, creating a PA dynamic. The current vertex is set to the selected vertex. Goes back to the first step (deciding if there will be a reply).
+    * If the current vertex has no neighbors, then the cursor goes back to the tree root (first comment in the thread) and the iteration ends, going back to the first setp.
+    * Else, the next vertex is chosen in the next level with probability proportional to it's in-degree, so that the more neighbors the vertex has, the more it is preferred, creating a PA dynamic. The current vertex is set to the selected vertex. Goes back to the first step (deciding for the current vertex if there will be a reply) - the iteration does not end here.
 
 ### Variations
 There are a few variations on the basic step that can and have been implemented in this project. They will be documented here (and not only in the code itself) as soon as we have time for it.
