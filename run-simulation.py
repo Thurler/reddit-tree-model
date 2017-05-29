@@ -1,5 +1,6 @@
+#!/usr/bin/env python
+
 import os
-import subprocess
 import argparse
 import numpy as np
 
@@ -50,4 +51,4 @@ if __name__ == "__main__":
                 print (command)
                 os.system(command)
 
-    print ("All done.")
+    print ("Batch done.")
