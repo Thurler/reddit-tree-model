@@ -32,7 +32,8 @@ def ReadDB(filename, subreddit):
     conn = sql.connect(filename)
     cursor = conn.cursor()
     if subreddit:
-        cursor.execute("SELECT * FROM May2015 WHERE subreddit = ?", subreddit)
+        cursor.execute("SELECT * FROM May2015 WHERE subreddit = ?",
+                       (subreddit,))
     else:
         cursor.execute("SELECT * FROM May2015")
     return cursor
@@ -53,6 +54,8 @@ def ParseDB(cursor, graph, store_comments):
 
     i_count = 0
     for row in cursor:
+        if i_count % 1000 == 0 or i_count % 1000 == 1:
+            print i_count
         new_submission = False
 
         # Each line is a vertex
