@@ -34,6 +34,8 @@ Example using mostly default values
 #### Batch process - run-simulation.py
 Runs the process (rp-simulator.py) for each configuration --runs times. At the end, gets all the files at --out_dir/allgraphs and, for each detected configuration, concatenates all the graphs in a single file, saving a graph file containing all threads at --out_dir/finalgraphs
 
+**Warning**: the process concatenates all the files found at --out_dir/allgraphs, not only those created in the current execution.
+
 Example running 5 times for ten distinct configurations, drawing each thread at --out_dir/plot/:
 
 ```python run-simulation.py --out_dir out --runs 5 --draw True --p_min 0.01 --p_max 0.1 --p_step 0.01```
