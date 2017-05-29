@@ -1,8 +1,23 @@
 #!/usr/bin/env python
 
+import time
+import datetime
 import os
+from os import listdir
+from os.path import isfile, join
 import argparse
 import numpy as np
+from graph_tool.all import *
+
+def AddGraph (g1, g2):
+    vertex_dic = {}
+    for v2 in g2.vertices():
+        v1 = g1.add_vertex()
+        g1.vp.sid[v1] = g2.vp.sid[v2]
+        g1.vp.height[v1] = g2.vp.height[v2]
+        vertex_dic[v2] = v1
+    for e2 in g2.edges():
+        g1.add_edge(vertex_dic[e2.source()], vertex_dic[e2.target()])
 
 if __name__ == "__main__":
 
@@ -35,6 +50,7 @@ if __name__ == "__main__":
                         help="Filename to save resulting graph.")
     args = parser.parse_args()
 
+    # for each p, for each ttl, for each run, execute the simulator once using os.system
     for p in np.arange(args.p_min, args.p_max + args.p_step, args.p_step):
         for ttl in args.TTL_values:
             for i in range(args.runs):
@@ -50,5 +66,37 @@ if __name__ == "__main__":
                     command += " --draw "+str(args.draw)
                 print (command)
                 os.system(command)
+
+    print ("Concating .gt files.")
+    abs_path = os.path.dirname(os.path.abspath(__file__))
+    mypath = os.path.join(abs_path, args.out_dir+"/allgraphs/")
+    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+
+    # aggregate outputs based on the graph configuration
+    config_dic = {}
+    for filename in onlyfiles:
+        if not filename.endswith(".gt"):
+            continue
+        cfg = "_".join(filename.split("_")[0:4])
+        if cfg not in config_dic:
+            config_dic[cfg] = []
+        config_dic[cfg].append(filename)
+
+    # add all trees to a single .gt file
+    for cfg in config_dic.keys():
+        print ("Generating output for "+cfg)
+        g = Graph()
+        # add properties
+        sid_prop = g.new_vertex_property("int16_t")
+        height_prop = g.new_vertex_property("int16_t")
+        g.vp.sid = sid_prop
+        g.vp.height = height_prop
+        for filename in config_dic[cfg]:
+            sg = load_graph(mypath + filename)
+            AddGraph(g, sg)
+        out_filename = cfg + "_Final_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
+        print ("Saving final graph at " + out_filename)
+        g.save(os.path.join(abs_path, args.out_dir+"/finalgraphs/" + cfg + ".gt"))
+
 
     print ("Batch done.")

@@ -154,7 +154,7 @@ if __name__ == "__main__":
     abs_path = os.path.dirname(os.path.abspath(__file__))
 
     print ("Saving graph at " + os.path.join(abs_path, args.out_dir+"/graph/"+base_filename+".gt"))
-    g.save(file_name=os.path.join(abs_path, args.out_dir+"/graph/"+base_filename+".gt"))
+    g.save(file_name=os.path.join(abs_path, args.out_dir+"/allgraphs/"+base_filename+".gt"))
 
     if (args.draw):
         print ("Drawing graph.")
