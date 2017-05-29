@@ -6,6 +6,18 @@ import graph_tool.all as gt
 import matplotlib.pyplot as plt
 
 
+def LabelComponents(g, filename):
+    # Labels out components in graph and saves to file
+    components, dist = gt.label_components(g, directed=False)
+    gp = g.new_graph_property("vector<int16_t>")
+    g.gp["component_dist"] = gp
+    g.gp["component_dist"] = dist
+    g.vp["conn_components"] = components
+    # Save to file so we dont have to compute them again
+    print "Saving result in file..."
+    g.save(filename)
+
+
 def DrawPlot(x, y, plotf, xlabel, ylabel, out, filename):
     # Draws a plot based on the plot function and labels it accordingly
     plotf(x, y)
@@ -24,30 +36,28 @@ def ComponentAnalysis(g, filename, out, force_calc):
     # This should compute and plot how many comments a submission has total
     if not force_calc and "component_dist" in g.gp:
         print "Found property in graph, reading from it!"
-        dist = g.gp.component_dist
     else:
         print "Computing graph components..."
         # Label out components to find connected components (submision trees)
-        components, dist = gt.label_components(g, directed=False)
-        gp = g.new_graph_property("vector<int16_t>")
-        g.gp["component_dist"] = gp
-        g.gp["component_dist"] = dist
-        # Save to file so we dont have to compute them again
-        print "Saving result in file..."
-        g.save(filename)
+        LabelComponents(g, filename)
+    dist = g.gp.component_dist
     # Get distribution of connected component sizes
     unique, counts = np.unique(dist, return_counts=True)
     total = 1.0 * np.sum(counts)
     ccdf = map(lambda i: np.sum(counts[i:]) / total, range(len(counts)))
     # Plot results
+    filepath = None if out is None else out + "component-hist.png"
     DrawPlot(unique, counts, plt.loglog, "Numero de comentarios", "Frequencia",
-             out, out + "component-hist.png")
+             out, filepath)
+    filepath = None if out is None else out + "component-ccdf.png"
     DrawPlot(unique, ccdf, plt.loglog, "Numero de comentarios", "CCDF", out,
-             out + "component-ccdf.png")
+             filepath)
 
 
 def CommentComponentAnalysis(g, filename, out, force_calc):
     # This should compute and plot how many comments each root comment has
+    if "conn_components" not in g.vp:
+        LabelComponents(g, filename)
     if not force_calc and "comment_component_dist" in g.gp:
         print "Found property in graph, reading from it!"
         component_dist = g.gp.comment_component_dist
@@ -55,10 +65,16 @@ def CommentComponentAnalysis(g, filename, out, force_calc):
         print "Computing comment components..."
         component_dist = {}
         roots = g.get_in_degrees(g.get_vertices()) == 0
-        total_roots = np.sum(roots)
+        total_roots = np.sum(roots) - 1
         current = 0
         # We iterate over the vertices that are submissions
-        for v in g.get_vertices()[roots][100:]:
+        for v in g.get_vertices()[roots]:
+            # We generate the subgraph for this submission
+            comp_index = g.vp.conn_components[v]
+            component = g.new_vertex_property("bool")
+            component.a[:] = g.vp.conn_components.a == comp_index
+            component.a[v] = 0
+            subgraph = gt.GraphView(g, component)
             out_neighbors = g.get_out_neighbours(v)
             total_neighbors = len(out_neighbors)
             print "{} / {} : {}".format(current, total_roots, total_neighbors)
@@ -68,7 +84,7 @@ def CommentComponentAnalysis(g, filename, out, force_calc):
                 vv = g.vertex(vv)
                 # For each root comment, we count how many vertices there are
                 # in their out component (replly tree)
-                pmap = gt.label_out_component(g, vv)
+                pmap = gt.label_out_component(subgraph, vv)
                 size = int(np.sum(pmap.a))
                 # We then archive the distribution for later analysis
                 if size not in component_dist:
@@ -90,6 +106,16 @@ def CommentComponentAnalysis(g, filename, out, force_calc):
              out, out + "comment-component-hist.png")
     DrawPlot(unique, ccdf, plt.loglog, "Numero de comentarios", "CCDF", out,
              out + "comment-component-ccdf.png")
+
+
+def HeightWidthAnalysis(g, filename, out, force_calc):
+    # This should compute height and width sizes for each submission and root
+    # comment, and plot the results
+    if not force_calc and "width_dist" in g.gp and "height_dist" in g.gp:
+        print "Found properties in graph, reading form it!"
+        pass  # TODO
+    else:
+        print "Computing width and height sizes..."
 
 if __name__ == "__main__":
 
@@ -118,6 +144,11 @@ if __name__ == "__main__":
 
     print "Analyzing comment components..."
     CommentComponentAnalysis(g, args.graph, out, args.force_calc)
+
+    # print "----------------------"
+
+    # print "Analyzing height and width..."
+    # HeightWidthAnalysis(g, args.graph, out, args.force_calc)
 
     print "----------------------"
 
