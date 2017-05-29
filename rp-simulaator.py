@@ -136,10 +136,15 @@ if __name__ == "__main__":
     # if true, the iteration pointer gos back to the root when a new node is added, endind the iteration
     parser.add_argument("--add_jump",default=True, help="If set true (default), the iteration" \
                         " pointer goes back to the root when a new node is added, ending the iteration.")
+    # Draw?
+    parser.add_argument("--draw",default=False, help="If set true (default), draws the graph.")
+    parser.add_argument("--debug",default=False, help="If set true (default), enable debug prints.")
     # files
     parser.add_argument("--out_dir", metavar="path/to/dir/", required=True,
                         help="Filename to save resulting graph.")
     args = parser.parse_args()
+
+    DEBUG = args.debug
 
     print ("Starting Simulation.")
     g = SimulateRtp(ProbabilityTypeFunction(args.p_type, args.p), args.TTL, args.N, args.add_jump)
@@ -151,10 +156,11 @@ if __name__ == "__main__":
     print ("Saving graph at " + os.path.join(abs_path, args.out_dir+"/graph/"+base_filename+".gt"))
     g.save(file_name=os.path.join(abs_path, args.out_dir+"/graph/"+base_filename+".gt"))
 
-    print ("Drawing graph.")
-    pos = sfdp_layout(g)
-    graph_draw(g, pos, output_size=(1000, 1000), vertex_color=[1,1,1,0],
-           vertex_size=1, edge_pen_width=1.2,
-           vcmap=matplotlib.cm.gist_heat_r, output=abs_path +"/"+args.out_dir+"/plot/"+base_filename+".png")
+    if (args.draw):
+        print ("Drawing graph.")
+        pos = sfdp_layout(g)
+        graph_draw(g, pos, output_size=(1000, 1000), vertex_color=[1,1,1,0],
+               vertex_size=1, edge_pen_width=1.2,
+               vcmap=matplotlib.cm.gist_heat_r, output=abs_path +"/"+args.out_dir+"/plot/"+base_filename+".png")
 
     print ("All Done")
