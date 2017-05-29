@@ -29,6 +29,7 @@ def ConditionIsMet (TTL, N, vertex_count, iteration_count) :
     return False
 
 def SimulateRtp (p_function, TTL, N, add_jump):
+    start_time = time.time()
 
     # create the graph
     g = Graph()
@@ -109,6 +110,10 @@ def SimulateRtp (p_function, TTL, N, add_jump):
                 p_sum += rpl[1]
         i_count += 1
 
+    print ("Simulated Graph Stats:")
+    print ("* Number of nodes: " + str(v_count))
+    print ("* Number of iterations: " + str(i_count))
+    print ("* Time taken: %s seconds" % (time.time() - start_time))
     return g
 
 
@@ -151,6 +156,5 @@ if __name__ == "__main__":
     graph_draw(g, pos, output_size=(1000, 1000), vertex_color=[1,1,1,0],
            vertex_size=1, edge_pen_width=1.2,
            vcmap=matplotlib.cm.gist_heat_r, output=abs_path +"/"+args.out_dir+"/plot/"+base_filename+".png")
-
 
     print ("All Done")
