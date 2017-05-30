@@ -38,7 +38,7 @@ if __name__ == "__main__":
                         "the p value. If p_range = [0.1, 0.9], then a step of 0.1 will generate" \
                         "9 distinct p values.")
     # ttl
-    parser.add_argument("--TTL_values", type=list, default=[1000], metavar="[X]", help="TTL configurations.")
+    parser.add_argument("--TTL", type=int, default=1000, metavar="x", help="TTL value.")
     # if true, the iteration pointer gos back to the root when a new node is added, endind the iteration
     parser.add_argument("--add_jump",default=True, help="If set true (default), the iteration" \
                         " pointer goes back to the root when a new node is added, ending the iteration.")
@@ -50,9 +50,11 @@ if __name__ == "__main__":
                         help="Filename to save resulting graph.")
     args = parser.parse_args()
 
+    ttls = [args.TTL]
+
     # for each p, for each ttl, for each run, execute the simulator once using os.system
     for p in np.arange(args.p_min, args.p_max + args.p_step, args.p_step):
-        for ttl in args.TTL_values:
+        for ttl in ttls:
             for i in range(args.runs):
                 print ("Running ("+str(i)+") for TTL: "+str(ttl)+ " and p: "+str(p))
                 command = "python3 rp-simulator.py --p " + str(p)
