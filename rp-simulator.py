@@ -13,11 +13,17 @@ DEBUG = False
 def ProbabilityTypeFunction (type, base_probability):
 
     # probability functions are defined here
-    def SimpleProbability (node):
+    def SimpleProbability (node, g):
         return base_probability;
+
+    def PRoot (node, g):
+        return base_probability ** (1/g.vp.height[node])
 
     if type == 'simple':
         return SimpleProbability
+    if type == 'proot':
+        return PRoot
+
     else:
         raise ValueError('The probability type function name was not recognised.' \
                          'Please check your p_type argument value.')
@@ -35,7 +41,7 @@ def SimulateRtp (p_function, TTL, N, add_jump):
     g = Graph()
 
     # add properties
-    sid_prop = g.new_vertex_property("int16_t")
+    sid_prop = g.new_vertex_property("int16_t")a
     height_prop = g.new_vertex_property("int16_t")
     g.vp.sid = sid_prop
     g.vp.height = height_prop
@@ -64,7 +70,7 @@ def SimulateRtp (p_function, TTL, N, add_jump):
             replies = []
             degree_sum = 0
             # checks if there will be a reply
-            if (p_function(current_node) > np.random.random()):
+            if (p_function(current_node, g) > np.random.random()):
                 # reply! adds new reply (new comment vertex)
                 if (DEBUG):
                     print ("Adding new vertex!")
