@@ -71,14 +71,14 @@ def SimulateRtp (p_function, TTL, N, add_jump):
                 vn = g.add_vertex()
                 g.vp.sid[vn] = v_count
                 g.vp.height[vn] = h_count + 1
-                g.add_edge(vn, current_node)
+                g.add_edge(current_node, vn)
                 v_count += 1
                 # break iteration if add_jump
                 if add_jump:
                     current_node = v1
                     break
             # goes to next iteration if there are no replies
-            if current_node.in_degree() < 1:
+            if current_node.out_degree() < 1:
                 if (DEBUG):
                     print ("Reached a leaf. Going to next iteration!")
                 current_node = v1
@@ -88,12 +88,12 @@ def SimulateRtp (p_function, TTL, N, add_jump):
             # First lets select the replies
             if (DEBUG):
                 print ("Selecting next vertex.")
-                print ("Current vertex indegree: "+ str(current_node.in_degree()))
-            for rpl in current_node.in_neighbours():
+                print ("Current vertex indegree: "+ str(current_node.out_degree()))
+            for rpl in current_node.out_neighbours():
                 # add 1 to give some weight to comments with no replies
-                in_degree = rpl.in_degree() + 1
-                replies.append((rpl, in_degree))
-                degree_sum += in_degree
+                out_degree = rpl.out_degree() + 1
+                replies.append((rpl, out_degree))
+                degree_sum += out_degree
             # Now lets normalize their degrees
             if (DEBUG):
                 # print ("Number of replies: "+ str(len(replies)))

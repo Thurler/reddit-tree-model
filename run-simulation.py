@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 from graph_tool.all import *
 
-def AddGraph (g1, g2):
+def AddGraph (g1_root, g1, g2):
     vertex_dic = {}
     for v2 in g2.vertices():
         v1 = g1.add_vertex()
@@ -18,6 +18,8 @@ def AddGraph (g1, g2):
         vertex_dic[v2] = v1
     for e2 in g2.edges():
         g1.add_edge(vertex_dic[e2.source()], vertex_dic[e2.target()])
+    g2_root = g2.get_vertices()[g2.get_in_degrees(g2.get_vertices()) == 0]
+    g1.add_edge(g1_root, g2_root)
 
 if __name__ == "__main__":
 
@@ -93,9 +95,12 @@ if __name__ == "__main__":
         height_prop = g.new_vertex_property("int16_t")
         g.vp.sid = sid_prop
         g.vp.height = height_prop
+        root = g.add_vertex()
+        g.vp.sid[root] = 0
+        g.vp.height[root] = 0
         for filename in config_dic[cfg]:
             sg = load_graph(mypath + filename)
-            AddGraph(g, sg)
+            AddGraph(root, g, sg)
         out_filename = cfg + "_Final_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
         print ("Saving final graph at " + out_filename)
         g.save(os.path.join(abs_path, args.out_dir+"/finalgraphs/" + cfg + ".gt"))
