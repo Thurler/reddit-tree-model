@@ -19,8 +19,9 @@ def AddGraph (g1_root, g1, g2):
         vertex_dic[v2] = v1
     for e2 in g2.edges():
         g1.add_edge(vertex_dic[e2.source()], vertex_dic[e2.target()])
-    g2_root = [x for x in g2.vertices() if x.in_degree() == 0][0]
-    g1.add_edge(g1_root, vertex_dic[g2_root])
+    if g1_root is not None:
+        g2_root = [x for x in g2.vertices() if x.in_degree() == 0][0]
+        g1.add_edge(g1_root, vertex_dic[g2_root])
 
 if __name__ == "__main__":
 
@@ -35,15 +36,13 @@ if __name__ == "__main__":
     #
     parser.add_argument("--p_min", type=float, default=0.1, help="Lower bound for p range.")
     parser.add_argument("--p_max", type=float, default=0.9, help="Higher bound for p range.")
-
-    #
     parser.add_argument("--p_step", type=float, default=0.1, help="Step used for incrementing" \
                         "the p value. If p_range = [0.1, 0.9], then a step of 0.1 will generate" \
                         "9 distinct p values.")
     # ttl
-    parser.add_argument("--TTL_init", type=int, default=1000, metavar="x", help="TTL value.")
-    parser.add_argument("--TTL_step", type=int, default=500, metavar="x", help="TTL value.")
-    parser.add_argument("--TTL_runs", type=int, default=1, metavar="x", help="TTL value.")
+    parser.add_argument("--TTL_init", type=int, default=1000, metavar="x", help="TTL initial value.")
+    parser.add_argument("--TTL_step", type=int, default=500, metavar="x", help="TTL step value.")
+    parser.add_argument("--TTL_runs", type=int, default=1, metavar="x", help="Number of TTL distict values to be run.")
 
     # if true, the iteration pointer gos back to the root when a new node is added, endind the iteration
     parser.add_argument("--add_jump",default=True, help="If set true (default), the iteration" \
@@ -51,7 +50,10 @@ if __name__ == "__main__":
     # Draw?
     parser.add_argument("--draw_each",default=False, help="If set true, draws each of the graphs/threads.")
     parser.add_argument("--draw_post",default=False, help="If set true, draws the entire graph/post.")
-    parser.add_argument("--debug",default=False, help="If set true (default), enable debug prints.")
+
+    parser.add_argument("--debug",default=False, help="If set true, enable debug prints.")
+
+    parser.add_argument("--dont_make_post",default=False, help="If set true , will make a GCC.")
     # files
     parser.add_argument("--out_dir", metavar="path/to/dir/", required=True,
                         help="Filename to save resulting graph.")
@@ -102,9 +104,11 @@ if __name__ == "__main__":
         height_prop = g.new_vertex_property("int16_t")
         g.vp.sid = sid_prop
         g.vp.height = height_prop
-        root = g.add_vertex()
-        g.vp.sid[root] = 0
-        g.vp.height[root] = 0
+        root = None
+        if not args.dont_make_post:
+            root = g.add_vertex()
+            g.vp.sid[root] = 0
+            g.vp.height[root] = 0
         for filename in config_dic[cfg]:
             sg = load_graph(mypath + filename)
             AddGraph(root, g, sg)
