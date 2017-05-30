@@ -58,7 +58,7 @@ def PlotWidthHeightAnalysis(width_dist, submit_width_dist, submit_height_dist,
     PlotDistAnalysis(comment_height_dist, out, "comments-height", "Altura")
 
 
-def ComponentAnalysis(g, filename, out, force_calc):
+def ComponentAnalysis(g, filename, out, force_calc, ignore_plots, ignore_text):
     # This should compute and plot how many comments a submission has total
     if not force_calc and "component_dist" in g.gp:
         print "Found property in graph, reading from it!"
@@ -72,15 +72,32 @@ def ComponentAnalysis(g, filename, out, force_calc):
     total = 1.0 * np.sum(counts)
     ccdf = map(lambda i: np.sum(counts[i:]) / total, range(len(counts)))
     # Plot results
-    filepath = None if out is None else out + "component-dist.png"
-    DrawPlot(unique, counts, plt.loglog, "Numero de comentarios", "Frequencia",
-             out, filepath)
-    filepath = None if out is None else out + "component-ccdf.png"
-    DrawPlot(unique, ccdf, plt.loglog, "Numero de comentarios", "CCDF", out,
-             filepath)
+    if not ignore_plots:
+        filepath = None if out is None else out + "component-dist.png"
+        DrawPlot(unique, counts, plt.loglog, "Numero de comentarios",
+                 "Frequencia", out, filepath)
+        filepath = None if out is None else out + "component-ccdf.png"
+        DrawPlot(unique, ccdf, plt.loglog, "Numero de comentarios", "CCDF",
+                 out, filepath)
+    # Save text results
+    if out is not None and not ignore_text:
+        filepath = out + "summary-submit-components.txt"
+        f = open(filepath, 'w')
+        f.write("Information regarding connected components for submissions\n")
+        f.write("Number of submissions: {}\n".format(np.sum(counts)))
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean component size: {}\n".format(mean))
+        f.write("Component size distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Size {} : {} submissions\n".format(u, c))
+        f.close()
 
 
-def CommentComponentAnalysis(g, filename, out, force_calc):
+def CommentComponentAnalysis(g, filename, out, force_calc, ignore_plots,
+                             ignore_text):
     # This should compute and plot how many comments each root comment has
     if "conn_components" not in g.vp:
         LabelComponents(g, filename)
@@ -124,11 +141,32 @@ def CommentComponentAnalysis(g, filename, out, force_calc):
         g.save(filename)
 
     # Plot stuff
-    PlotDistAnalysis(component_dist, out, "comment-component",
-                     "Numero de comentarios")
+    if not ignore_plots:
+        PlotDistAnalysis(component_dist, out, "comment-component",
+                         "Numero de comentarios")
+
+    # Save text results
+    if out is not None and not ignore_text:
+        filepath = out + "summary-comment-components.txt"
+        unique = sorted(component_dist.keys())
+        counts = [component_dist[x] for x in unique]
+        total = 1.0 * np.sum(counts)
+        f = open(filepath, 'w')
+        f.write("Information regarding connected components for comments\n")
+        f.write("Number of comments: {}\n".format(total))
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean component size: {}\n".format(mean))
+        f.write("Component size distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Size {} : {} submissions\n".format(u, c))
+        f.close()
 
 
-def HeightWidthAnalysis(g, filename, out, force_calc):
+def HeightWidthAnalysis(g, filename, out, force_calc, ignore_plots,
+                        ignore_text):
     # This should compute height and width sizes for each submission and root
     # comment, and plot the results
     if "conn_components" not in g.vp:
@@ -159,7 +197,7 @@ def HeightWidthAnalysis(g, filename, out, force_calc):
             comp_index = g.vp.conn_components[v]
             component = g.new_vertex_property("bool")
             component.a[:] = g.vp.conn_components.a == comp_index
-            component.a[v] = 0
+            component.a[v] = False
             subgraph = gt.GraphView(g, component)
             out_neighbors = g.get_out_neighbours(v)
             total_neighbors = len(out_neighbors)
@@ -186,7 +224,7 @@ def HeightWidthAnalysis(g, filename, out, force_calc):
                 dist_map = gt.shortest_distance(subgraph, vv, directed=True)
                 index_map = np.arange(vertex_count)
                 # Filter to those in subgraph
-                mask = component.a > 0
+                mask = component.a.astype("bool")
                 distances = dist_map.a[mask]
                 index_map = index_map[mask]
                 # Filter to finite distances
@@ -200,6 +238,7 @@ def HeightWidthAnalysis(g, filename, out, force_calc):
                 comment_height_dist[height] += 1
                 max_height = max(max_height, height + 1)
                 # Filter to distances higher than 0
+                index_map = index_map[distances > 0]
                 distances = distances[distances > 0]
                 if len(distances) == 0:
                     continue
@@ -259,11 +298,61 @@ def HeightWidthAnalysis(g, filename, out, force_calc):
         g.save(filename)
 
     # Plot results
-    PlotWidthHeightAnalysis(width_dist, submit_width_dist, submit_height_dist,
-                            comment_height_dist, out)
+    if not ignore_plots:
+        PlotWidthHeightAnalysis(width_dist, submit_width_dist,
+                                submit_height_dist, comment_height_dist, out)
+
+    # Save text results
+    if out is not None and not ignore_text:
+        filepath = out + "summary-height-width.txt"
+        f = open(filepath, 'w')
+        f.write("Information regarding trees width and height\n")
+
+        unique = sorted(submit_width_dist.keys())
+        counts = [submit_width_dist[x] for x in unique]
+        total = 1.0 * np.sum(counts)
+        f.write("Number of submissions: {}\n".format(total))
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean submit width: {}\n".format(mean))
+        f.write("Submit width distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Width {} : {} submissions\n".format(u, c))
+
+        unique = sorted(submit_height_dist.keys())
+        counts = [submit_height_dist[x] for x in unique]
+        total = 1.0 * np.sum(counts)
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean submit height: {}\n".format(mean))
+        f.write("Submit height distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Height {} : {} submissions\n".format(u, c))
+
+        unique = sorted(comment_height_dist.keys())
+        counts = [comment_height_dist[x] for x in unique]
+        total = 1.0 * np.sum(counts)
+        f.write("Number of comments: {}\n".format(total))
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean comment height: {}\n".format(mean))
+        f.write("Comment height distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Height {} : {} comments\n".format(u, c))
+
+        f.write("Width distribution per level:\n")
+        for level in width_dist:
+            f.write("Level {} | {}\n".format(level, str(width_dist[level])))
+        f.close()
 
 
-def DegreeAnalysis(g, filename, out, force_calc):
+def DegreeAnalysis(g, filename, out, force_calc, ignore_plots, ignore_text):
     # This should compute the degree distribution for comments and submissions
     if not force_calc and "submit_deg_dist" in g.gp:
         print "Found properties in graph, reading form it!"
@@ -317,17 +406,58 @@ def DegreeAnalysis(g, filename, out, force_calc):
         g.save(filename)
 
     # Plot results
-    PlotDistAnalysis(submit_deg_dist, out, "submits-degree",
-                     "Numero de comentarios raiz")
-    PlotDistAnalysis(comment_deg_dist, out, "comments-degree",
-                     "Numero de replies a um comentario")
-    for level in level_deg_dist:
-        continue
-        # something's wrong with levels, which in turn is fucking this up
-        # FIX ME
-        PlotDistAnalysis(level_deg_dist[level], out,
-                         "level-degree-{}".format(level),
-                         "Numero de replies no nivel {}".format(level))
+    if not ignore_plots:
+        PlotDistAnalysis(submit_deg_dist, out, "submits-degree",
+                         "Numero de comentarios raiz")
+        PlotDistAnalysis(comment_deg_dist, out, "comments-degree",
+                         "Numero de replies a um comentario")
+        lvs, means = [], []
+        for level in level_deg_dist:
+            lvs.append(level)
+            s = c = 0
+            for degree in level_deg_dist[level]:
+                s += degree * level_deg_dist[level][degree]
+                c += level_deg_dist[level][degree]
+            means.append(1.0 * s / c)
+        filepath = None if out is None else out + "level-avg-degree.png"
+        DrawPlot(lvs, means, plt.plot, "Nivel", "Grau Medio", out, filepath)
+
+    # Save text results
+    if out is not None and not ignore_text:
+        filepath = out + "summary-degrees.txt"
+        f = open(filepath, 'w')
+        f.write("Information regarding vertices degrees\n")
+
+        unique = sorted(submit_deg_dist.keys())
+        counts = [submit_deg_dist[x] for x in unique]
+        total = 1.0 * np.sum(counts)
+        f.write("Number of submissions: {}\n".format(total))
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean submit degree: {}\n".format(mean))
+        f.write("Submit degree distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Degree {} : {} submissions\n".format(u, c))
+
+        unique = sorted(comment_deg_dist.keys())
+        counts = [comment_deg_dist[x] for x in unique]
+        total = 1.0 * np.sum(counts)
+        f.write("Number of comments: {}\n".format(total))
+        mean = 0
+        for u, c in zip(unique, counts):
+            mean += u * c
+        mean /= total
+        f.write("Mean comment degree: {}\n".format(mean))
+        f.write("Comment degree distribution:\n")
+        for u, c in zip(unique, counts):
+            f.write("Degree {} : {} comments\n".format(u, c))
+
+        f.write("Degree distribution per level:\n")
+        for lv in level_deg_dist:
+            f.write("Level {} | {}\n".format(lv, str(level_deg_dist[lv])))
+        f.close()
 
 if __name__ == "__main__":
 
@@ -340,6 +470,10 @@ if __name__ == "__main__":
                         help="Directory to save resulting statistics")
     parser.add_argument("--force_calc", default=False, action="store_true",
                         help="Force algorithms to run again")
+    parser.add_argument("--ignore_plots", default=False, action="store_true",
+                        help="Do not generate plots for this analysis")
+    parser.add_argument("--ignore_text", default=False, action="store_true",
+                        help="Do not generate text for this analysis")
     args = parser.parse_args()
 
     print "Loading graph..."
@@ -350,22 +484,26 @@ if __name__ == "__main__":
     print "----------------------"
 
     print "Analyzing submission components..."
-    ComponentAnalysis(g, args.graph, out, args.force_calc)
+    ComponentAnalysis(g, args.graph, out, args.force_calc, args.ignore_plots,
+                      args.ignore_text)
 
     print "----------------------"
 
     print "Analyzing comment components..."
-    CommentComponentAnalysis(g, args.graph, out, args.force_calc)
+    CommentComponentAnalysis(g, args.graph, out, args.force_calc,
+                             args.ignore_plots, args.ignore_text)
 
     print "----------------------"
 
     print "Analyzing height and width..."
-    HeightWidthAnalysis(g, args.graph, out, args.force_calc)
+    HeightWidthAnalysis(g, args.graph, out, args.force_calc, args.ignore_plots,
+                        args.ignore_text)
 
     print "----------------------"
 
     print "Analyzing degree distribution..."
-    DegreeAnalysis(g, args.graph, out, args.force_calc)
+    DegreeAnalysis(g, args.graph, out, args.force_calc, args.ignore_plots,
+                   args.ignore_text)
 
     print "----------------------"
 
