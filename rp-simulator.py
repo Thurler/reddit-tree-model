@@ -150,7 +150,7 @@ if __name__ == "__main__":
     g = SimulateRtp(ProbabilityTypeFunction(args.p_type, args.p), args.TTL, args.N, args.add_jump)
 
     base_filename = str(args.p) + args.p_type +"_"+ str(args.TTL) +"_"+ str(args.N) +"_"+str(args.add_jump)
-    base_filename += "_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
+    base_filename += "_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S%f')
     abs_path = os.path.dirname(os.path.abspath(__file__))
 
     print ("Saving graph at " + os.path.join(abs_path, args.out_dir+"/graph/"+base_filename+".gt"))
