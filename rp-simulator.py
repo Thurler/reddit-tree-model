@@ -41,8 +41,8 @@ def SimulateRtp (p_function, TTL, N, add_jump):
     g = Graph()
 
     # add properties
-    sid_prop = g.new_vertex_property("int16_t")a
-    height_prop = g.new_vertex_property("int16_t")
+    sid_prop = g.new_vertex_property("int32_t")
+    height_prop = g.new_vertex_property("int32_t")
     g.vp.sid = sid_prop
     g.vp.height = height_prop
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     print ("Starting Simulation.")
     g = SimulateRtp(ProbabilityTypeFunction(args.p_type, args.p), args.TTL, args.N, args.add_jump)
 
-    base_filename = str(args.p) + args.p_type +"_"+ str(args.TTL) +"_"+ str(args.N) +"_"+str(args.add_jump)
+    base_filename = '%01.10f'%args.p + args.p_type +"_"+ str(args.TTL) +"_"+ str(args.N) +"_"+str(args.add_jump)
     base_filename += "_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S%f')
     abs_path = os.path.dirname(os.path.abspath(__file__))
 

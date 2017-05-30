@@ -100,8 +100,8 @@ if __name__ == "__main__":
         print ("Generating output for "+cfg)
         g = Graph()
         # add properties
-        sid_prop = g.new_vertex_property("int16_t")
-        height_prop = g.new_vertex_property("int16_t")
+        sid_prop = g.new_vertex_property("int32_t")
+        height_prop = g.new_vertex_property("int32_t")
         g.vp.sid = sid_prop
         g.vp.height = height_prop
         root = None
