@@ -29,7 +29,7 @@ Creates a single graph file AT --out_dir/allgraphs. Also plot the graph at --out
 
 Example using mostly default values
 
-```python rp-simulator --p 0.01 --out_dir out```
+```python rp-simulator.py --p 0.01 --out_dir out```
 
 #### Batch process - run-simulation.py
 Runs the process (rp-simulator.py) for each configuration --runs times. At the end, gets all the files at --out_dir/allgraphs and, for each detected configuration, concatenates all the graphs in a single file, saving a graph file containing all threads at --out_dir/finalgraphs
@@ -38,4 +38,4 @@ Runs the process (rp-simulator.py) for each configuration --runs times. At the e
 
 Example running 5 times for ten distinct configurations, drawing each thread at --out_dir/plot/:
 
-```python run-simulation.py --out_dir out --runs 5 --draw True --p_min 0.01 --p_max 0.1 --p_step 0.01```
+```python run-simulation.py --out_dir out --runs 5 --draw_each True --p_min 0.01 --p_max 0.1 --p_step 0.01```
