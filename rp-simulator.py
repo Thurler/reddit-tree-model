@@ -69,10 +69,10 @@ def SimulateRtp (p_function, TTL, N, add_jump):
                 if (DEBUG):
                     print ("Adding new vertex!")
                 vn = g.add_vertex()
+                v_count += 1
                 g.vp.sid[vn] = v_count
                 g.vp.height[vn] = h_count + 1
                 g.add_edge(current_node, vn)
-                v_count += 1
                 # break iteration if add_jump
                 if add_jump:
                     current_node = v1

@@ -7,6 +7,7 @@ from os import listdir
 from os.path import isfile, join
 import argparse
 import numpy as np
+from pylab import *
 from graph_tool.all import *
 
 def AddGraph (g1_root, g1, g2):
@@ -18,8 +19,8 @@ def AddGraph (g1_root, g1, g2):
         vertex_dic[v2] = v1
     for e2 in g2.edges():
         g1.add_edge(vertex_dic[e2.source()], vertex_dic[e2.target()])
-    g2_root = g2.get_vertices()[g2.get_in_degrees(g2.get_vertices()) == 0]
-    g1.add_edge(g1_root, g2_root)
+    g2_root = [x for x in g2.vertices() if x.in_degree() == 0][0]
+    g1.add_edge(g1_root, vertex_dic[g2_root])
 
 if __name__ == "__main__":
 
@@ -40,19 +41,25 @@ if __name__ == "__main__":
                         "the p value. If p_range = [0.1, 0.9], then a step of 0.1 will generate" \
                         "9 distinct p values.")
     # ttl
-    parser.add_argument("--TTL", type=int, default=1000, metavar="x", help="TTL value.")
+    parser.add_argument("--TTL_init", type=int, default=1000, metavar="x", help="TTL value.")
+    parser.add_argument("--TTL_step", type=int, default=500, metavar="x", help="TTL value.")
+    parser.add_argument("--TTL_runs", type=int, default=1, metavar="x", help="TTL value.")
+
     # if true, the iteration pointer gos back to the root when a new node is added, endind the iteration
     parser.add_argument("--add_jump",default=True, help="If set true (default), the iteration" \
                         " pointer goes back to the root when a new node is added, ending the iteration.")
     # Draw?
-    parser.add_argument("--draw",default=False, help="If set true (default), draws the graph.")
+    parser.add_argument("--draw_each",default=False, help="If set true, draws each of the graphs/threads.")
+    parser.add_argument("--draw_post",default=False, help="If set true, draws the entire graph/post.")
     parser.add_argument("--debug",default=False, help="If set true (default), enable debug prints.")
     # files
     parser.add_argument("--out_dir", metavar="path/to/dir/", required=True,
                         help="Filename to save resulting graph.")
     args = parser.parse_args()
 
-    ttls = [args.TTL]
+    ttls = []
+    for i in range(args.TTL_runs):
+        ttls.append(args.TTL_init + i * args.TTL_step)
 
     # for each p, for each ttl, for each run, execute the simulator once using os.system
     for p in np.arange(args.p_min, args.p_max + args.p_step, args.p_step):
@@ -66,8 +73,8 @@ if __name__ == "__main__":
                     command += " --add_jump "+str(args.add_jump)
                 if args.debug:
                     command += " --debug "+str(args.debug)
-                if args.draw:
-                    command += " --draw "+str(args.draw)
+                if args.draw_each:
+                    command += " --draw "+str(args.draw_each)
                 print (command)
                 os.system(command)
 
@@ -104,6 +111,13 @@ if __name__ == "__main__":
         out_filename = cfg + "_Final_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
         print ("Saving final graph at " + out_filename)
         g.save(os.path.join(abs_path, args.out_dir+"/finalgraphs/" + cfg + ".gt"))
+
+        if (args.draw_post):
+            print ("Drawing graph.")
+            pos = sfdp_layout(g)
+            graph_draw(g, pos, output_size=(1000, 1000), vertex_color=[1,1,1,0],
+                   vertex_size=1, edge_pen_width=1.2,
+                   vcmap=matplotlib.cm.gist_heat_r, output=abs_path +"/"+args.out_dir+"/plot/M_"+cfg+".png")
 
 
     print ("Batch done.")
