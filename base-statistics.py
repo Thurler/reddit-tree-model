@@ -35,6 +35,10 @@ def DrawPlot(x, y, plotf, xlabel, ylabel, out, filename):
 def PlotDistAnalysis(dist, out, filepath, xlabel):
     unique = sorted(dist.keys())
     counts = [dist[x] for x in unique]
+    plus_one = unique[0] == 0
+    if plus_one:
+        unique = map(lambda x: x+1, unique)
+        xlabel += " + 1 (por causa do zero)"
     total = 1.0 * sum(counts)
     ccdf = map(lambda i: sum(counts[i:]) / total, range(len(counts)))
     # Plot results
