@@ -8,6 +8,9 @@ from pylab import *
 from graph_tool.all import *
 
 DEBUG = False
+DRAW_STEP = False
+DRAW_STEP_PATH = ""
+SIZE = True
 
 # Returns the probability function to be used by the simulator.
 def ProbabilityTypeFunction (type, base_probability):
@@ -27,6 +30,20 @@ def ProbabilityTypeFunction (type, base_probability):
     else:
         raise ValueError('The probability type function name was not recognised.' \
                          'Please check your p_type argument value.')
+
+def DrawGraph(g, t, p, filename):
+    pos = sfdp_layout(g)
+    #pos = arf_layout(g)
+    #pos = radial_tree_layout(g, g.vertex(0))
+    if SIZE:
+        deg = g.degree_property_map("out")
+    else:
+        deg = 1
+    txt = ["" for x in g.vertices()]
+    txt[0] = str(t)
+    graph_draw(g, pos, output_size=(512, 512), vertex_color=[1,1,1,0],
+           vertex_size=deg, edge_pen_width=1.2,
+           vcmap=matplotlib.cm.gist_heat_r, output=filename)
 
 def ConditionIsMet (TTL, N, vertex_count, iteration_count) :
     if (N < 0) or (N > vertex_count):
@@ -79,6 +96,8 @@ def SimulateRtp (p_function, TTL, N, add_jump):
                 g.vp.sid[vn] = v_count
                 g.vp.height[vn] = h_count + 1
                 g.add_edge(current_node, vn)
+                if DRAW_STEP:
+                    DrawGraph(g,i_count,p_function(current_node, g),DRAW_STEP_PATH+"%010.f"%v_count+".png")
                 # break iteration if add_jump
                 if add_jump:
                     current_node = v1
@@ -144,6 +163,7 @@ if __name__ == "__main__":
                         " pointer goes back to the root when a new node is added, ending the iteration.")
     # Draw?
     parser.add_argument("--draw",default=False, help="If set true (default), draws the graph.")
+    parser.add_argument("--draw_step",default=False, help="If set true (default), draws the graph each time a vertex is added.")
     parser.add_argument("--debug",default=False, help="If set true (default), enable debug prints.")
     # files
     parser.add_argument("--out_dir", metavar="path/to/dir/", required=True,
@@ -151,22 +171,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     DEBUG = args.debug
-
-    print ("Starting Simulation.")
-    g = SimulateRtp(ProbabilityTypeFunction(args.p_type, args.p), args.TTL, args.N, args.add_jump)
+    DRAW_STEP = args.draw_step
 
     base_filename = '%01.10f'%args.p + args.p_type +"_"+ str(args.TTL) +"_"+ str(args.N) +"_"+str(args.add_jump)
     base_filename += "_" + datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S%f')
     abs_path = os.path.dirname(os.path.abspath(__file__))
+
+    if (DRAW_STEP):
+        DRAW_STEP_PATH = abs_path +"/"+args.out_dir+"/plot/"
+
+    print ("Starting Simulation.")
+    g = SimulateRtp(ProbabilityTypeFunction(args.p_type, args.p), args.TTL, args.N, args.add_jump)
 
     print ("Saving graph at " + os.path.join(abs_path, args.out_dir+"/graph/"+base_filename+".gt"))
     g.save(file_name=os.path.join(abs_path, args.out_dir+"/allgraphs/"+base_filename+".gt"))
 
     if (args.draw):
         print ("Drawing graph.")
-        pos = sfdp_layout(g)
-        graph_draw(g, pos, output_size=(1000, 1000), vertex_color=[1,1,1,0],
-               vertex_size=1, edge_pen_width=1.2,
-               vcmap=matplotlib.cm.gist_heat_r, output=abs_path +"/"+args.out_dir+"/plot/"+base_filename+".png")
+        DrawGraph(g, args.TTL, args.p, abs_path +"/"+args.out_dir+"/plot/"+base_filename+"_f.png")
 
     print ("All Done")

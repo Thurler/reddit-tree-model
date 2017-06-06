@@ -70,6 +70,7 @@ if __name__ == "__main__":
                 print ("Running ("+str(i)+") for TTL: "+str(ttl)+ " and p: "+str(p))
                 command = "python3 rp-simulator.py --p " + str(p)
                 command += " --TTL "+str(ttl)
+                command += " --p_type "+str(args.p_type)
                 command += " --out_dir "+str(args.out_dir)
                 if not args.add_jump:
                     command += " --add_jump "+str(args.add_jump)
