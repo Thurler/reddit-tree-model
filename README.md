@@ -1,3 +1,5 @@
+### [Presentation](https://pboueke.github.io/presentations/rtm/reddit.html#/) with the idea and results
+
 # reddit-tree-model
 Final project for complex networks class at UFRJ. The proposal is to use Kaggle's Reddit dataset to bring forth a model describing Reddit comment trees.
 
